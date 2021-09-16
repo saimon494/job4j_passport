@@ -72,4 +72,14 @@ public class Passport {
     public int hashCode() {
         return Objects.hash(id, series, number);
     }
+
+    @Override
+    public String toString() {
+        return "Passport{"
+                + "id=" + id
+                + ", series=" + series
+                + ", number=" + number
+                + ", expirationDate=" + expirationDate
+                + '}';
+    }
 }

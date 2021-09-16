@@ -1,5 +1,8 @@
 package ru.job4j.passport.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.job4j.passport.domain.Passport;
 import ru.job4j.passport.repository.PassportRepository;
@@ -13,6 +16,9 @@ import java.util.stream.StreamSupport;
 public class PassportService {
 
     private final PassportRepository repository;
+
+    @Autowired
+    private KafkaTemplate<Integer, Passport> kafkaTemplate;
 
     public PassportService(final PassportRepository repository) {
         this.repository = repository;
@@ -60,5 +66,18 @@ public class PassportService {
         var currentDate = new Date();
         long dateAfter3Months = currentDate.getTime() + 1000 * 60 * 60 * 24 * 90L;
         return repository.findExpiredPassportAfter3Months(new Date(dateAfter3Months));
+    }
+
+    @Scheduled(initialDelay = 3000, fixedDelay = 2000)
+    public void checkPassportByDate() {
+        if (findReplaceable().size() != 0) {
+            System.out.println("Passports for replacement: ");
+            for (Passport p : findReplaceable()) {
+                kafkaTemplate.send("passport", p);
+                System.out.println();
+            }
+        } else {
+            System.out.println("There are no passports for replacement");
+        }
     }
 }
